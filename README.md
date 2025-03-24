@@ -1,4 +1,4 @@
-# library_management_task
+# Library Manager
 Basic Library Management System 
 
 ### Steps
