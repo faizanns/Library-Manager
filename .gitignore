@@ -122,6 +122,9 @@ __pypackages__/
 celerybeat-schedule
 celerybeat.pid
 
+# Database
+database/
+
 # SageMath parsed files
 *.sage.py
 
