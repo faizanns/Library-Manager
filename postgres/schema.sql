@@ -1,3 +1,7 @@
+-- 1) ENUM type for borrow state (only two values)
+CREATE TYPE b_state AS ENUM ('Present', 'Borrowed');
+-- Present is the default state for books.
+
 -- Authors table
 CREATE TABLE Author (
     id SERIAL PRIMARY KEY,
@@ -29,6 +33,8 @@ CREATE TABLE Book (
     title TEXT NOT NULL
 );
 
+--- Association Tables ---
+-- Contain foreign keys(composite primary keys) to establish many-to-many relationships.
 -- BookAuthor (many-to-many)
 CREATE TABLE BookAuthor (
     book_id INT REFERENCES Book(id) ON DELETE CASCADE,
@@ -49,6 +55,7 @@ CREATE TABLE BookGenre (
     genre_id INT REFERENCES Genre(id) ON DELETE CASCADE,
     PRIMARY KEY (book_id, genre_id)
 );
+--- End of Association Tables ---
 
 -- Borrow table
 CREATE TABLE Borrow (
@@ -56,6 +63,7 @@ CREATE TABLE Borrow (
     customer_id INT REFERENCES Customer(id) ON DELETE CASCADE,
     borrowed_on DATE NOT NULL,
     return_date DATE,
-    state TEXT,
+    borrow_state b_state NOT NULL DEFAULT 'Present',
+    -- The state is set to 'Present' by default when a book is added to the library.
     PRIMARY KEY (book_id, customer_id, borrowed_on)
 );

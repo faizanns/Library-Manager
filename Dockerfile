@@ -8,6 +8,6 @@ RUN apk add --no-cache postgresql-dev gcc python3-dev musl-dev
 
 RUN pip install -r requirements.txt
 
-COPY . .
+# COPY . .
 
 CMD ["python", "app.py"]

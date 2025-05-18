@@ -1,32 +1,40 @@
 version: '3.8'
 
 services:
-  backend:
-    image: library-manager
-    build:
-      context: .
-      dockerfile: Dockerfile
-    ports:
-      - 8000:8000
-    depends_on:
-      - db
+  # backend:
+  #   image: library-manager
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile
+  #   ports:
+  #     - 8000:8000
+  #   volumes:
+  #     - .:/app
+  #   depends_on:
+  #     db:
+  #       condition: service_healthy
+  #   environment:
+  #     - DB_NAME=library_db
+  #     - DB_USER=library_user  
+  #     - DB_PASSWORD=library_pass
 
 
   db:
     image: postgres:latest
     container_name: postgres-db
     environment:
-      - POSTGRES_USER=${DB_USER}
-      - POSTGRES_PASSWORD=${DB_PASSWORD}
-      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_USER=library_user
+      - POSTGRES_PASSWORD=library_pass
+      - POSTGRES_DB=library_db
     ports:
       - 5432:5432
     volumes:
-      - ./database:/var/lib/postgresql/data
-      - ./postgres/schema.sql:/docker-entrypoint-initdb.d/schema.sql
-      - ./postgres/data.sql:/docker-entrypoint-initdb.d/data.sql
+      # - ./database:/var/lib/postgresql/data
+      - ./postgres/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+      - ./postgres/data.sql:/docker-entrypoint-initdb.d/02-data.sql
     healthcheck:
-      test: ["CMD", "pg_isready", "-U", "postgres"]
+      # test: ["CMD", "pg_isready", "-U", "postgres"]
+      test: [ "CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
       interval: 5s
       timeout: 10s
       retries: 5

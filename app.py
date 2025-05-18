@@ -122,24 +122,34 @@
 # if __name__ == '__main__':
 #     app.run(debug=True)
 
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, abort, render_template
 from flask_cors import CORS
 import psycopg2
 import os
 import time
 
-app = Flask(__name__)
+app = Flask(__name__, static_url_path='/static', static_folder='static')
 CORS(app)
+
+# Route to serve the home page
+@app.route('/')
+def home():
+    return render_template('index.html')
+
+# Route to serve viewer.html
+@app.route('/viewer.html')
+def viewer():
+    return render_template('viewer.html')
 
 def connect_to_db(retries=10, delay=3):
     for i in range(retries):
         try:
             return psycopg2.connect(
-                dbname=os.getenv("DB_NAME"),
-                user=os.getenv("DB_USER"),
-                password=os.getenv("DB_PASSWORD"),
-                host="db",
-                port=5432
+                dbname="library_db",
+                user="library_user",
+                password="library_pass",
+                host="localhost",
+                port=5432,
             )
         except psycopg2.OperationalError as e:
             print(f"Database not ready (attempt {i+1}/{retries}): {e}")
@@ -148,37 +158,135 @@ def connect_to_db(retries=10, delay=3):
 
 conn = connect_to_db()
 
-@app.route('/books')
+
+@app.route('/api/books', methods=['GET'])
 def get_books():
     with conn.cursor() as cur:
-        cur.execute("SELECT id, title, author, publisher, genre FROM Book")
-        books = cur.fetchall()
-        return jsonify([{
-            "id": b[0],
-            "title": b[1],
-            "author": b[2],
-            "publisher": b[3],
-            "genre": b[4]
-        } for b in books])
-
-@app.route('/borrowed')
-def get_borrowed():
-    with conn.cursor() as cur:
         cur.execute("""
-            SELECT Customer.name, Book.title, Borrow.borrowed_on, Borrow.return_date, Book.id
-            FROM Borrow
-            JOIN Customer ON Borrow.customer_id = Customer.id
-            JOIN Book ON Borrow.book_id = Book.id
-            WHERE Borrow.return_date IS NULL OR Borrow.return_date > CURRENT_DATE
-        """)
-        records = cur.fetchall()
-        return jsonify([{
-            "customer": r[0],
-            "book": r[1],
-            "borrowed_on": r[2].isoformat() if r[2] else None,
-            "return_date": r[3].isoformat() if r[3] else None,
-            "book_id": r[4]
-        } for r in records])
+            SELECT
+                Book.id,
+                Book.title,
+                    
+                -- Aggregate distinct authors for the book into an array
+                array_agg(DISTINCT Author.name) AS authors,
+                    
+                -- Aggregate distinct publishers for the book
+                array_agg(DISTINCT Publisher.name) AS publishers,
+                    
+                -- Aggregate distinct genres for the book
+                array_agg(DISTINCT Genre.name) AS genres,
+                    
+                -- Borrower name (if any)
+                Customer.name AS borrower,
+                Borrow.borrowed_on,
+                Borrow.return_date,
+                    
+                -- If borrow_state is NULL (never borrowed), treat as 'Present'
+                COALESCE(Borrow.borrow_state, 'Present') AS borrow_state
+                    
+            FROM Book
+            -- Join authors via BookAuthor junction table
+            LEFT JOIN BookAuthor ON BookAuthor.book_id = Book.id
+            LEFT JOIN Author ON Author.id = BookAuthor.author_id
 
-if __name__ == "__main__":
+            -- Join publishers via BookPublisher junction table
+            LEFT JOIN BookPublisher ON BookPublisher.book_id = Book.id
+            LEFT JOIN Publisher ON Publisher.id = BookPublisher.publisher_id
+
+            -- Join genres via BookGenre junction table
+            LEFT JOIN BookGenre ON BookGenre.book_id = Book.id
+            LEFT JOIN Genre ON Genre.id = BookGenre.genre_id
+
+            -- Join borrow info
+            LEFT JOIN Borrow ON Borrow.book_id = Book.id
+            LEFT JOIN Customer ON Customer.id = Borrow.customer_id
+
+            GROUP BY
+                Book.id,
+                Book.title,
+                Customer.name,
+                Borrow.borrowed_on,
+                Borrow.return_date,
+                Borrow.borrow_state
+
+            ORDER BY Book.id;
+        """)
+        books = []
+        for r in cur.fetchall():
+            books.append({
+                'id': r[0],
+                'title': r[1],
+                'authors': r[2] or [],
+                'publishers': r[3] or [],
+                'genres': r[4] or [],
+                'borrower': r[5],
+                'borrowed_on': r[6].isoformat() if r[6] else None,
+                'return_date': r[7].isoformat() if r[7] else None,
+                'state': r[8]
+            })
+        return jsonify(books)
+
+
+@app.route('/api/borrow', methods=['POST'])
+def borrow_book():
+    data = request.get_json() or {}
+    book_id = data.get('book_id')
+    customer = data.get('customer')
+    borrowed_on = data.get('borrowed_on')
+    return_date = data.get('return_date')
+    if not all([book_id, customer, borrowed_on, return_date]):
+        abort(400, 'Missing required fields')
+    with conn.cursor() as cur:
+        # create or fetch customer
+        # we assume customer name is unique
+        cur.execute("SELECT id FROM Customer WHERE name = %s", (customer,))
+        row = cur.fetchone()
+        if row:
+            cust_id = row[0]
+        else:
+            # customer does not exist, create a new one
+            cur.execute("INSERT INTO Customer (name) VALUES (%s) RETURNING id", (customer,))
+            cust_id = cur.fetchone()[0]
+        # Insert new borrow record
+        cur.execute(
+            """
+            INSERT INTO Borrow (book_id, customer_id, borrowed_on, return_date, borrow_state)
+            VALUES (%s, %s, %s, %s, 'Borrowed')
+            """,
+            (book_id, cust_id, borrowed_on, return_date)
+        )
+        conn.commit()
+    return jsonify({'message': 'Book borrowed'}), 201
+
+
+@app.route('/api/return', methods=['POST'])
+def return_book():
+    data = request.get_json() or {}
+    book_id = data.get('book_id')
+    returned_on = data.get('returned_on')
+    if not all([book_id, returned_on]):
+        abort(400, 'Missing required fields')
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            DELETE FROM Borrow
+            WHERE book_id = %s AND borrow_state = 'Borrowed'
+            """,
+            (book_id,)
+        )
+        if cur.rowcount == 0:
+            abort(404, 'No active borrow record found for this book')
+        conn.commit()
+    return jsonify({'message': 'Book returned'})
+
+
+@app.route('/api/clear', methods=['POST'])
+def clear_borrows():
+    with conn.cursor() as cur:
+        cur.execute("DELETE FROM Borrow;")
+        conn.commit()
+    return jsonify({'message': 'All borrow records cleared'})
+
+
+if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8000)
