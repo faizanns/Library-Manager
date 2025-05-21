@@ -1,0 +1,50 @@
+[
+  {
+    "_id": 1,
+    "isbn": "1234567890",
+    "title": "1984",
+    "author_ids": [1],
+    "publisher_id": 1,
+    "genre_ids": [1]
+  },
+  {
+    "_id": 2,
+    "isbn": "1234567891",
+    "title": "To Kill a Mockingbird",
+    "author_ids": [2],
+    "publisher_id": 2,
+    "genre_ids": [1]
+  },
+  {
+    "_id": 3,
+    "isbn": "1234567892",
+    "title": "Pride and Prejudice",
+    "author_ids": [3],
+    "publisher_id": 3,
+    "genre_ids": [3]
+  },
+  {
+    "_id": 4,
+    "isbn": "1234567893",
+    "title": "Animal Farm",
+    "author_ids": [1],
+    "publisher_id": 4,
+    "genre_ids": [4]
+  },
+  {
+    "_id": 5,
+    "isbn": "1234567894",
+    "title": "Ikigai",
+    "author_ids": [4, 5],
+    "publisher_id": 5,
+    "genre_ids": [5]
+  },
+  {
+    "_id": 6,
+    "isbn": "9999999999",
+    "title": "Cooking DataBases",
+    "author_ids": [6, 7],
+    "publisher_id": 1,
+    "genre_ids": [2]
+  }
+]

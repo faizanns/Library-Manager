@@ -4,7 +4,6 @@
 <head>
     <meta charset="UTF-8">
     <title>Library Catalog</title>
-    <!-- Link to External CSS -->
     <link rel="stylesheet" href="/static/css/style.css">
 </head>
 
@@ -30,16 +29,13 @@
             </tbody>
         </table>
 
-        <!-- Forms Container -->
         <div class="forms-container">
-            <!-- Borrow Form -->
             <div class="form-container">
                 <h2>Borrow Book</h2>
                 <form id="borrowForm">
                     <label for="borrowBookId">Book:</label>
                     <select id="borrowBookId" required>
                         <option value="">Select a Book</option>
-                        <!-- Options will be populated dynamically -->
                     </select>
 
                     <label for="borrowerName">Borrower's Name:</label>
@@ -52,14 +48,12 @@
                 </form>
             </div>
 
-            <!-- Return Form -->
             <div class="form-container">
                 <h2>Return Book</h2>
                 <form id="returnForm">
                     <label for="returnBookId">Book:</label>
                     <select id="returnBookId" required>
                         <option value="">Select a Book</option>
-                        <!-- Options will be populated dynamically -->
                     </select>
 
                     <label for="returnDate">Return Date:</label>
@@ -70,13 +64,11 @@
             </div>
         </div>
 
-        <!-- Clear Data Button -->
         <div class="form-container">
             <button id="clearDataBtn">Clear All Borrowing Data</button>
         </div>
     </div>
 
-    <!-- Link to External JS -->
     <script src="/static/js/index.js"></script>
 </body>
 

@@ -1,0 +1,22 @@
+[
+  {
+    "_id": 1,
+    "name": "Fiction"
+  },
+  {
+    "_id": 2,
+    "name": "Non-Fiction"
+  },
+  {
+    "_id": 3,
+    "name": "Romance"
+  },
+  {
+    "_id": 4,
+    "name": "Satire"
+  },
+  {
+    "_id": 5,
+    "name": "Self Help"
+  }
+]

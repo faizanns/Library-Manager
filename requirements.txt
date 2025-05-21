@@ -3,3 +3,6 @@ requests==2.31.0
 lxml==4.9.3
 flask_cors
 psycopg2-binary==2.9.6
+flask-pymongo==2.3.0
+pymongo==4.7.0
+python-dotenv

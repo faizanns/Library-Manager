@@ -1,0 +1,22 @@
+[
+  {
+    "_id": 1,
+    "name": "Penguin Books"
+  },
+  {
+    "_id": 2,
+    "name": "J.B. Lippincott & Co."
+  },
+  {
+    "_id": 3,
+    "name": "T. Egerton"
+  },
+  {
+    "_id": 4,
+    "name": "Secker and Warburg"
+  },
+  {
+    "_id": 5,
+    "name": "Penguin Life"
+  }
+]

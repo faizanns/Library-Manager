@@ -1,0 +1,18 @@
+[
+  {
+    "_id": 1,
+    "book_id": 4,
+    "customer_id": 1,
+    "borrowed_on": "2024-02-01",
+    "return_date": "2024-05-01",
+    "borrow_state": "Borrowed"
+  },
+  {
+    "_id": 2,
+    "book_id": 2,
+    "customer_id": 2,
+    "borrowed_on": "2025-05-01",
+    "return_date": "2024-08-01",
+    "borrow_state": "Borrowed"
+  }
+]
